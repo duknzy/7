@@ -1,5 +1,5 @@
 // ==========================================
-// 1. FIREBASE INITIALIZATION
+// 1. FIREBASE INITIALIZATION & AUTH
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyAsmP30vutYGSqm6v4vb12h3mKoE3JW_4U",
@@ -9,13 +9,17 @@ const firebaseConfig = {
     messagingSenderId: "488832079942",
     appId: "1:488832079942:web:665565bb1b985f62841247",
     measurementId: "G-R7QBYEVJHN"
-  };
+};
 
 let db = null;
+let auth = null;
+let currentUser = null;
+
 if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY") {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
-    console.log("[SYSTEM] Firebase Firestore Initialized.");
+    auth = firebase.auth();
+    console.log("[SYSTEM] Firebase Initialized.");
 }
 
 // ==========================================
@@ -35,17 +39,65 @@ let sessionStats = {
     corrects: 0,
     totalTime: 0
 };
-// ==========================================
-// テキストの自動補正 (LaTeXの $ 抜け修復フィルター)
-// ==========================================
 
 // ==========================================
-// 3. INITIALIZATION & DATA LOADING
+// 3. INITIALIZATION & AUTH
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    initAuth();
     initEvents();
-    loadProblemPackage();
 });
+
+function initAuth() {
+    if (!auth) return;
+
+    // 認証ステータスの変化を即座に検知して画面を切り替える
+    auth.onAuthStateChanged(user => {
+        const authContainer = document.getElementById('authContainer');
+        const mainApp = document.getElementById('mainApp');
+        const userBadge = document.getElementById('userEmailBadge');
+
+        if (user) {
+            currentUser = user;
+            if (authContainer) authContainer.style.display = 'none';
+            if (mainApp) mainApp.style.display = 'flex';
+            if (userBadge) userBadge.innerText = user.email.split('@')[0].toUpperCase();
+            
+            // 認証後に問題データを読み込む
+            loadProblemPackage();
+        } else {
+            currentUser = null;
+            if (authContainer) authContainer.style.display = 'flex';
+            if (mainApp) mainApp.style.display = 'none';
+        }
+    });
+
+    document.getElementById('btnLogin').addEventListener('click', (e) => handleAuth(e, 'login'));
+    document.getElementById('btnSignUp').addEventListener('click', (e) => handleAuth(e, 'signup'));
+    document.getElementById('btnLogout').addEventListener('click', () => auth.signOut());
+}
+
+async function handleAuth(e, mode) {
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+
+    if (!email || !password) {
+        alert("メールアドレスとパスワードを入力しろ。");
+        return;
+    }
+
+    try {
+        if (mode === 'login') {
+            await auth.signInWithEmailAndPassword(email, password);
+        } else {
+            await auth.createUserWithEmailAndPassword(email, password);
+            alert("ドライバー登録完了だ。そのままコースインするぞ。");
+        }
+    } catch (error) {
+        alert(`認証エラー: ${error.message}`);
+    }
+}
 
 async function loadProblemPackage() {
     try {
@@ -218,7 +270,7 @@ function startQuiz(problem) {
 
     renderMath();
 
-    // ★ 動的制限時間（基本12秒 ＋ シナリオ文字数 × 0.08秒）
+    // 動的制限時間（基本12秒 ＋ シナリオ文字数 × 0.08秒）
     currentLimitSec = parseFloat((12.0 + (problem.scenario.length * 0.08)).toFixed(1));
     startTimer(currentLimitSec);
 }
@@ -336,8 +388,10 @@ function renderReview() {
 }
 
 function saveUserLog(problemId, isCorrect, reactionTime) {
-    if (!db) return;
+    if (!db || !currentUser) return;
     db.collection("user_logs").add({
+        uid: currentUser.uid,
+        email: currentUser.email,
         problemId: problemId,
         category: currentProblem.category,
         isCorrect: isCorrect,
@@ -354,14 +408,12 @@ function renderGroupedProblemList() {
     if (!listDiv) return;
     listDiv.innerHTML = '';
 
-    // 単元（category）ごとにグループ化
     const grouped = {};
     problemDB.forEach(p => {
         if (!grouped[p.category]) grouped[p.category] = [];
         grouped[p.category].push(p);
     });
 
-    // カテゴリーごとにレンダリング
     Object.keys(grouped).forEach(cat => {
         const groupCard = document.createElement('div');
         groupCard.className = 'category-group';

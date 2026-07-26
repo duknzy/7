@@ -4,19 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PHYSICS TELEMETRY | VERSTAPPEN SPEC</title>
-<link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
     <!-- KaTeX -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-    <!-- Firebase SDK (v9 Compat版: vanilla JSで最も組み込みやすい) -->
+    <!-- Firebase SDK (v9 Compat版) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-<div class="app-layout">
+<!-- 認証ガード画面 (未ログイン時にオーバーレイ表示) -->
+<div id="authContainer" class="auth-overlay">
+    <div class="card auth-card">
+        <h2>DRIVER AUTHENTICATION</h2>
+        <p style="color:var(--text-sub); margin-bottom:16px; font-size:0.9rem;">コースインにはログインが必要です</p>
+        
+        <form id="authForm">
+            <div class="form-group">
+                <label>EMAIL</label>
+                <input type="email" id="authEmail" required placeholder="driver@redbull.com">
+            </div>
+            <div class="form-group">
+                <label>PASSWORD</label>
+                <input type="password" id="authPassword" required placeholder="••••••••">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" id="btnLogin" class="btn full-width">ログイン</button>
+                <button type="button" id="btnSignUp" class="btn btn-secondary full-width">新規登録</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- メインアプリ領域 (認証成功時のみ表示) -->
+<div class="app-layout" id="mainApp" style="display: none;">
     <!-- PC用 ライブテレメトリ・サイドパネル -->
     <aside class="telemetry-sidebar">
         <div class="sidebar-card">
@@ -54,7 +79,10 @@
     <div class="container">
         <header>
             <h1>PHYSICS <span>TELEMETRY</span></h1>
-            <span class="badge">SYSTEM V2.5</span>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="badge" id="userEmailBadge">DRIVER</span>
+                <button id="btnLogout" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">LOGOUT</button>
+            </div>
         </header>
 
         <nav class="nav-tabs">
