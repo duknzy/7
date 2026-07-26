@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHYSICS TELEMETRY | VERSTAPPEN SPEC</title>
+<link rel="stylesheet" href="style.css">
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Firebase SDK (v9 Compat版: vanilla JSで最も組み込みやすい) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- PC用 ライブテレメトリ・サイドパネル -->
+    <aside class="telemetry-sidebar">
+        <div class="sidebar-card">
+            <div class="sidebar-title">LIVE TELEMETRY</div>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">SESSION SECTOR</span>
+                    <span id="sideSector" class="stat-value highlight">ALL</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">TOTAL ATTEMPTS</span>
+                    <span id="sideAttempts" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ACCURACY</span>
+                    <span id="sideAccuracy" class="stat-value green">--%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">AVG REACTION</span>
+                    <span id="sideAvgTime" class="stat-value yellow">--.s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-card controls-hint">
+            <div class="sidebar-title">PADDLE SHIFT (KEYS)</div>
+            <ul>
+                <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> : 回答選択</li>
+                <li><kbd>Space</kbd> / <kbd>Enter</kbd> : 次のラップ</li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- メインコンテンツ領域 -->
+    <div class="container">
+        <header>
+            <h1>PHYSICS <span>TELEMETRY</span></h1>
+            <span class="badge">SYSTEM V2.5</span>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="attack-tab">タイムアタック</button>
+            <button class="tab-btn" data-tab="add-tab">問題データ登録</button>
+            <button class="tab-btn" data-tab="list-tab">問題一覧</button>
+        </nav>
+
+        <!-- TAB 1: TIME ATTACK -->
+        <main id="attack-tab" class="tab-content active">
+            <div class="card search-card">
+                <div class="search-box" style="flex-wrap: wrap;">
+                    <select id="selectCategory" class="select-box">
+                        <option value="ALL">ALL SECTORS (全単元)</option>
+                    </select>
+                    <button class="btn" id="btnSectorStart">単元アタック</button>
+                    <button class="btn btn-secondary" id="btnRandom">完全ランダム</button>
+                    <div style="display: flex; gap: 8px; width: 100%; margin-top: 8px;">
+                        <input type="number" id="searchNo" placeholder="問題No.直接指定 (例: 10)">
+                        <button class="btn btn-secondary" id="btnSearch">呼出</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="quizContainer" class="card" style="display: none;">
+                <div class="timer-container">
+                    <div id="timerBar" class="timer-bar"></div>
+                </div>
+
+                <div class="problem-meta">
+                    <span id="pCategory" class="category-tag">分野</span>
+                    <span id="pNo" class="problem-no">No.--</span>
+                </div>
+
+                <h2 class="problem-title" id="pTitle">問題タイトル</h2>
+                <p class="problem-scenario" id="pScenario">問題シナリオ...</p>
+
+                <div class="conditions-tag" id="pTags"></div>
+                <div class="options-grid" id="optionsContainer"></div>
+            </div>
+
+            <div id="resultContainer" class="card result-card" style="display: none;">
+                <div id="resultHeader" class="result-header">PURPLE SECTOR</div>
+                <div id="splitTime" class="split-time">Reaction Time: 0.00s</div>
+
+                <div class="review-box">
+                    <div id="reviewTitle" class="review-title"></div>
+                    <div id="reviewScenario" class="review-scenario"></div>
+                    <div id="reviewOptions" class="review-options"></div>
+                </div>
+
+                <div class="key-point-box">
+                    <div class="key-point-title">⚡ KEY TRIGGER (勝負の着眼点)</div>
+                    <p id="keyPointText">解説テキスト...</p>
+                </div>
+
+                <button class="btn full-width" id="btnNext">次の問題へ (NEXT LAP)</button>
+            </div>
+        </main>
+
+        <!-- TAB 2: ADD DATA -->
+        <section id="add-tab" class="tab-content">
+            <div class="card">
+                <h2>問題データの新規追加（カスタム）</h2>
+                <form id="addForm">
+                    <div class="form-group">
+                        <label>問題集番号 (No.)</label>
+                        <input type="number" id="addNo" required placeholder="例: 3">
+                    </div>
+                    <div class="form-group">
+                        <label>分野 (カテゴリー)</label>
+                        <input type="text" id="addCategory" placeholder="例: 力学（物体の運動）" value="力学（物体の運動）">
+                    </div>
+                    <div class="form-group">
+                        <label>タイトル</label>
+                        <input type="text" id="addTitle" required placeholder="例: 斜面上のつり合い">
+                    </div>
+                    <div class="form-group">
+                        <label>問題シナリオ（要約）</label>
+                        <textarea id="addScenario" rows="3" required placeholder="問題設定の要点"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>着眼点タグ（カンマ区切り）</label>
+                        <input type="text" id="addTags" placeholder="例: 斜面成分, 力の分解, 静止摩擦力">
+                    </div>
+                    <div class="form-group">
+                        <label>選択肢 1【正解】</label>
+                        <input type="text" id="addOpt0" required placeholder="正解の解法ルート">
+                    </div>
+                    <div class="form-group">
+                        <label>選択肢 2（ダミー）</label>
+                        <input type="text" id="addOpt1" placeholder="間違い・トラップ解法">
+                    </div>
+                    <div class="form-group">
+                        <label>選択肢 3（ダミー）</label>
+                        <input type="text" id="addOpt2" placeholder="間違い・トラップ解法">
+                    </div>
+                    <div class="form-group">
+                        <label>Key Trigger (勝負の着眼点)</label>
+                        <textarea id="addKeyPoint" rows="2" placeholder="即断の決め手となる理由"></textarea>
+                    </div>
+                    <button type="submit" class="btn full-width">ローカル/クラウドへ保存</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 3: LIST -->
+        <section id="list-tab" class="tab-content">
+            <div class="card">
+                <h2>登録済み問題一覧（単元別）</h2>
+                <div id="problemList" class="grouped-problem-list"></div>
+                <button class="btn btn-secondary full-width" id="btnExport" style="margin-top: 16px;">
+                    全データをJSON出力 (バックアップ)
+                </button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
