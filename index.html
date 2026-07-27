@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="apple-touch-icon" href="icon.png">
   <meta name="apple-mobile-web-app-title" content="PHYSICS 8BIT">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- エラー画面の警告に従って、mobile-web-app-capable に修正 -->
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>PHYSICS TELEMETRY 8-BIT</title>
   
-  <!-- Google Fonts: 8bitレトロフォント -->
+  <!-- Google Fonts: 8bitレトロフォント (ゴシック体ベース) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -124,7 +125,11 @@
                     <div id="timerBar" class="timer-bar"></div>
                 </div>
                 <div class="problem-meta">
-                    <span id="pCategory" class="category-tag">CATEGORY</span>
+                    <div>
+                        <span id="pCategory" class="category-tag">CATEGORY</span>
+                        <!-- タイヤコンパウンド（難易度）バッジ -->
+                        <span id="pDifficulty" class="badge" style="margin-left: 8px;">MEDIUM</span>
+                    </div>
                     <span id="pNo" class="problem-no">No.--</span>
                 </div>
                 <h2 class="problem-title" id="pTitle">TITLE</h2>
@@ -163,6 +168,17 @@
                         <label>CATEGORY</label>
                         <input type="text" id="addCategory" placeholder="例: 力学">
                     </div>
+                    
+                    <!-- タイヤコンパウンド選択を追加 -->
+                    <div class="form-group">
+                        <label>COMPOUND (LAP難易度)</label>
+                        <select id="addDifficulty" class="select-box">
+                            <option value="soft">SOFT</option>
+                            <option value="medium" selected>MEDIUM</option>
+                            <option value="hard">HARD</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label>TITLE</label>
                         <input type="text" id="addTitle" required placeholder="例: 等加速度運動">

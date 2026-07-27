@@ -296,21 +296,28 @@ function startQuiz(problem) {
     document.getElementById('pCategory').innerText = problem.category;
     document.getElementById('pTitle').innerText = problem.title;
 
-    // タイピング演出で問題文を表示
-    const scenarioEl = document.getElementById('pScenario');
-    scenarioEl.innerText = '';
-    clearInterval(typewriterInterval);
-    let charIdx = 0;
-    typewriterInterval = setInterval(() => {
-        if (charIdx < problem.scenario.length) {
-            scenarioEl.innerText += problem.scenario[charIdx];
-            if (charIdx % 3 === 0) play8BitSound('type');
-            charIdx++;
-            renderMath();
-        } else {
-            clearInterval(typewriterInterval);
+    // コンパウンド（難易度）のUI反映
+    const diffEl = document.getElementById('pDifficulty');
+    if (diffEl) {
+        const diff = problem.difficulty || 'medium';
+        diffEl.innerText = diff.toUpperCase();
+        
+        // タイヤの色を再現 (Soft=赤, Medium=黄, Hard=白)
+        if (diff === 'soft') {
+            diffEl.style.backgroundColor = 'var(--accent-red)';
+            diffEl.style.color = '#fff';
+        } else if (diff === 'medium') {
+            diffEl.style.backgroundColor = 'var(--accent-yellow)';
+            diffEl.style.color = '#000';
+        } else if (diff === 'hard') {
+            diffEl.style.backgroundColor = '#ffffff';
+            diffEl.style.color = '#000';
         }
-    }, 20);
+    }
+
+    // 【重要】数式(KaTeX)を破壊しないよう、タイピング演出を廃止して即時表示
+    const scenarioEl = document.getElementById('pScenario');
+    scenarioEl.innerText = problem.scenario;
 
     const tagsContainer = document.getElementById('pTags');
     tagsContainer.innerHTML = '';
@@ -344,7 +351,9 @@ function startQuiz(problem) {
         optsContainer.appendChild(btn);
     });
 
+    // 文字列のセットが完全に終わった後に1回だけ数式をレンダリングする
     renderMath();
+    
     currentLimitSec = parseFloat((12.0 + (problem.scenario.length * 0.08)).toFixed(1));
     startTimer(currentLimitSec);
 }
@@ -527,19 +536,25 @@ function handleAddForm(e) {
     e.preventDefault();
     play8BitSound('click');
     const no = parseInt(document.getElementById('addNo').value);
-    const correctIdx = parseInt(document.getElementById('addCorrectIndex').value); // 正解インデックスの反映
+    const correctIdx = parseInt(document.getElementById('addCorrectIndex').value);
+    const diff = document.getElementById('addDifficulty').value; // コンパウンド値を取得
+
+    // 未入力の選択肢を配列から除外するフィルター処理を追加
+    const rawOptions = [
+        document.getElementById('addOpt0').value,
+        document.getElementById('addOpt1').value,
+        document.getElementById('addOpt2').value
+    ];
+    const filteredOptions = rawOptions.filter(opt => opt.trim() !== "");
 
     const newProblem = {
         id: no,
         category: document.getElementById('addCategory').value || "未分類",
+        difficulty: diff, // データに難易度を保存
         title: document.getElementById('addTitle').value,
         scenario: document.getElementById('addScenario').value,
         tags: document.getElementById('addTags').value.split(',').map(s => s.trim()).filter(s => s),
-        options: [
-            document.getElementById('addOpt0').value,
-            document.getElementById('addOpt1').value || "",
-            document.getElementById('addOpt2').value || ""
-        ],
+        options: filteredOptions, // 空文字が除去されたクリーンな配列
         correctIndex: correctIdx,
         keyPoint: document.getElementById('addKeyPoint').value || ""
     };
