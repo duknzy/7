@@ -508,3 +508,8 @@ input:focus, textarea:focus, .select-box:focus {
         font-size: 1.1rem;
     }
 }
+/* style.css に追加 */
+.katex {
+    white-space: normal !important;
+    word-break: keep-all !important; /* または break-word */
+}
