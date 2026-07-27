@@ -63,6 +63,8 @@ body {
     display: none;
     width: 300px;
     flex-shrink: 0;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .container {
@@ -81,8 +83,6 @@ body {
     }
     .telemetry-sidebar {
         display: flex;
-        flex-direction: column;
-        gap: 16px;
         position: sticky;
         top: 24px;
     }
@@ -157,6 +157,8 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 header h1 {
@@ -187,6 +189,7 @@ header h1 span { color: var(--accent-red); }
 .search-box {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 input, textarea, .select-box {
@@ -214,6 +217,7 @@ input:focus, textarea:focus, .select-box:focus {
     box-shadow: var(--pixel-shadow-btn);
     transition: transform 0.05s;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn:hover { background: #ff2277; }
@@ -253,6 +257,8 @@ input:focus, textarea:focus, .select-box:focus {
     justify-content: space-between;
     font-size: 0.95rem;
     margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .category-tag { color: var(--accent-blue); font-weight: bold; }
@@ -362,32 +368,143 @@ input:focus, textarea:focus, .select-box:focus {
 .key-point-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 6px; }
 
 /* ナビゲーションタブ */
-.nav-tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
-.tab-btn {
-    background: none; border: none; color: var(--text-sub);
-    font-weight: bold; padding: 8px 16px; cursor: pointer; font-size: 0.95rem;
+.nav-tabs { 
+    display: flex; 
+    gap: 10px; 
+    border-bottom: 2px solid var(--border-color); 
+    padding-bottom: 10px;
+    flex-wrap: wrap;
 }
-.tab-btn.active { color: var(--text-main); background: #1c2128; border: 2px solid #ffffff; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+
+.tab-btn {
+    background: none; 
+    border: none; 
+    color: var(--text-sub);
+    font-weight: bold; 
+    padding: 8px 16px; 
+    cursor: pointer; 
+    font-size: 0.95rem;
+}
+
+.tab-btn.active { 
+    color: var(--text-main); 
+    background: #1c2128; 
+    border: 2px solid #ffffff; 
+}
+
+.tab-content { 
+    display: none; 
+}
+
+.tab-content.active { 
+    display: block; 
+}
 
 /* フォーム & カテゴリグループ */
-.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.form-group label { font-size: 0.9rem; color: var(--text-sub); }
+.form-group { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+    margin-bottom: 16px; 
+}
 
-.category-group { margin-bottom: 24px; border: 2px solid var(--border-color); overflow: hidden; }
-.category-header { background: #1c2128; padding: 12px 18px; font-weight: bold; color: var(--accent-blue); font-size: 1rem; border-bottom: 2px solid var(--border-color); }
-.list-item { padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #000000; font-size: 0.95rem; }
-.list-item:last-child { border-bottom: none; }
+.form-group label { 
+    font-size: 0.9rem; 
+    color: var(--text-sub); 
+}
+
+.category-group { 
+    margin-bottom: 24px; 
+    border: 2px solid var(--border-color); 
+    overflow: hidden; 
+}
+
+.category-header { 
+    background: #1c2128; 
+    padding: 12px 18px; 
+    font-weight: bold; 
+    color: var(--accent-blue); 
+    font-size: 1rem; 
+    border-bottom: 2px solid var(--border-color); 
+}
+
+.list-item { 
+    padding: 12px 18px; 
+    border-bottom: 1px solid var(--border-color); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: #000000; 
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.list-item:last-child { 
+    border-bottom: none; 
+}
 
 /* KaTeX 調整 */
-.katex { font-size: 1.05em !important; line-height: normal !important; text-indent: 0 !important; font-family: KaTeX_Main, sans-serif !important; }
-.katex-display { margin: 0.8em 0 !important; overflow-x: auto !important; overflow-y: hidden !important; }
+.katex { 
+    font-size: 1.05em !important; 
+    line-height: normal !important; 
+    text-indent: 0 !important; 
+    font-family: KaTeX_Main, sans-serif !important; 
+}
+
+.katex-display { 
+    margin: 0.8em 0 !important; 
+    overflow-x: auto !important; 
+    overflow-y: hidden !important; 
+}
 
 /* 認証画面モーダル */
 .auth-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(5, 7, 10, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 16px;
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    background: rgba(5, 7, 10, 0.95); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 9999; 
+    padding: 16px;
 }
-.auth-card { width: 100%; max-width: 400px; border: 3px solid var(--accent-red); box-shadow: var(--pixel-shadow); text-align: center; }
-.auth-card h2 { font-size: 1.3rem; font-weight: 900; color: var(--accent-red); margin-bottom: 6px; letter-spacing: 1px; }
+
+.auth-card { 
+    width: 100%; 
+    max-width: 400px; 
+    border: 3px solid var(--accent-red); 
+    box-shadow: var(--pixel-shadow); 
+    text-align: center; 
+}
+
+.auth-card h2 { 
+    font-size: 1.3rem; 
+    font-weight: 900; 
+    color: var(--accent-red); 
+    margin-bottom: 6px; 
+    letter-spacing: 1px; 
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.1rem;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .problem-title {
+        font-size: 1.1rem;
+    }
+}
