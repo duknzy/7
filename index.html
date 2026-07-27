@@ -4,27 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ========================================== -->
-  <!-- ★ ここから追加 ★ -->
-  <!-- ========================================== -->
-  
-  <!-- 1. アプリアイコンの指定 -->
+  <!-- 1. PWA設定 -->
   <link rel="apple-touch-icon" href="icon.png">
-  
-  <!-- 2. ホーム画面に表示されるアプリ名 -->
-  <meta name="apple-mobile-web-app-title" content="単語ブロック">
-  
-  <!-- 3. Safariの枠（アドレスバー）を消してフルスクリーン化 -->
+  <meta name="apple-mobile-web-app-title" content="物理テレメトリ">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  
-  <!-- 4. 画面最上部（時刻やバッテリー表示部）の見た目 -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- ========================================== -->
-  <!-- ★ ここまで追加 ★ -->
-  <!-- ========================================== -->
 
-  <title>アプリ</title>
+  <title>PHYSICS TELEMETRY</title>
+
+  <!-- 2. 外部ライブラリ (KaTeX & Firebase) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- 3. 自作CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
