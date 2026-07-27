@@ -74,13 +74,6 @@ function play8BitSound(type) {
         gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
         osc.start(now);
         osc.stop(now + 0.35);
-    } else if (type === 'type') { // 文字打鍵音
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, now);
-        gain.gain.setValueAtTime(0.03, now);
-        gain.gain.linearRampToValueAtTime(0.001, now + 0.02);
-        osc.start(now);
-        osc.stop(now + 0.02);
     }
 }
 
@@ -94,7 +87,6 @@ let userSelectedIndex = null;
 let timerId = null;
 let startTime = 0;
 let currentLimitSec = 12.0;
-let typewriterInterval = null;
 
 let sessionStats = {
     attempts: 0,
@@ -108,7 +100,20 @@ let swElapsed = 0;
 let isSwRunning = false;
 
 // ==========================================
-// 4. INITIALIZATION & AUTH
+// 4. UTILITY FUNCTIONS
+// ==========================================
+// ✅ Fisher-Yates シャッフルアルゴリズム（良い乱数分布）
+function fisherYatesShuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// ==========================================
+// 5. INITIALIZATION & AUTH
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initEvents();
@@ -116,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initAuth() {
-    // ✅ 修正: if (!auth) return の前にボタンイベントを設定
+    // ✅ ボタンイベントを先に設定（Firebase有無に関わらず）
     const btnLogin = document.getElementById('btnLogin');
     const btnSignUp = document.getElementById('btnSignUp');
     const btnLogout = document.getElementById('btnLogout');
@@ -136,7 +141,6 @@ function initAuth() {
     // ✅ Firebase認証が有効な場合のみ onAuthStateChanged を設定
     if (!auth) {
         console.warn("[SYSTEM] Firebase not available. Running in offline mode.");
-        // オフラインモード: ダミーユーザーでメインアプリを表示
         const mainApp = document.getElementById('mainApp');
         const authContainer = document.getElementById('authContainer');
         if (authContainer) authContainer.style.display = 'none';
@@ -201,7 +205,13 @@ async function loadProblemPackage() {
             const customData = JSON.parse(localStorage.getItem('custom_physics_db')) || [];
             const combined = [...jsonPackage];
             customData.forEach(c => {
-                if (!combined.some(p => p.id === c.id)) combined.push(c);
+                // ✅ 修正: id が重複している場合は置き換える
+                const index = combined.findIndex(p => p.id === c.id);
+                if (index >= 0) {
+                    combined[index] = c;
+                } else {
+                    combined.push(c);
+                }
             });
             loadedData = combined;
         }
@@ -214,7 +224,7 @@ async function loadProblemPackage() {
 }
 
 // ==========================================
-// 5. EVENT BINDING & SHORTCUTS
+// 6. EVENT BINDING & SHORTCUTS
 // ==========================================
 function initEvents() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -294,12 +304,18 @@ function initEvents() {
 }
 
 // ==========================================
-// 6. PROBLEM SELECTION & QUIZ
+// 7. PROBLEM SELECTION & QUIZ
 // ==========================================
 function setupCategoryFilter() {
     const categorySet = new Set();
     problemDB.forEach(p => categorySet.add(p.category));
     const categorySelect = document.getElementById('selectCategory');
+    
+    // ✅ 修正: 既存のカテゴリオプション（"ALL SECTORS"以外）を削除
+    while (categorySelect.options.length > 1) {
+        categorySelect.remove(1);
+    }
+    
     const sorted = Array.from(categorySet).sort();
     sorted.forEach(cat => {
         const opt = document.createElement('option');
@@ -345,6 +361,12 @@ function searchAndStart() {
 }
 
 function startQuiz(problem) {
+    // ✅ 修正: 前回のタイマーをクリア
+    if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+    }
+    
     currentProblem = problem;
     userSelectedIndex = null;
     startTime = Date.now();
@@ -372,11 +394,12 @@ function startQuiz(problem) {
         });
     }
 
+    // ✅ 修正: Fisher-Yates シャッフルを使用
     currentShuffledOptions = problem.options.map((opt, idx) => ({
         text: opt,
         isCorrect: idx === problem.correctIndex
     }));
-    currentShuffledOptions.sort(() => Math.random() - 0.5);
+    currentShuffledOptions = fisherYatesShuffle(currentShuffledOptions);
 
     const optionsDiv = document.getElementById('optionsContainer');
     optionsDiv.innerHTML = '';
@@ -395,7 +418,6 @@ function startQuiz(problem) {
     updateSidebarTelemetry();
     renderMath();
 
-    if (timerId) clearInterval(timerId);
     timerId = setInterval(updateTimer, 50);
 }
 
@@ -416,7 +438,8 @@ function updateTimer() {
 
     if (remaining <= 0) {
         clearInterval(timerId);
-        userSelectedIndex = null;
+        // ✅ 修正: タイムアウト時は -1 で表示
+        userSelectedIndex = -1;
         showResult();
     }
 }
@@ -428,7 +451,8 @@ function selectOption(idx) {
 }
 
 function showResult() {
-    const isCorrect = currentShuffledOptions[userSelectedIndex]?.isCorrect || false;
+    // ✅ 修正: userSelectedIndex が -1（タイムアウト）の場合の処理
+    const isCorrect = userSelectedIndex >= 0 ? currentShuffledOptions[userSelectedIndex]?.isCorrect : false;
     const elapsed = (Date.now() - startTime) / 1000;
     const finalReaction = Math.min(elapsed, currentLimitSec).toFixed(2);
 
@@ -485,21 +509,31 @@ function renderReview() {
     currentShuffledOptions.forEach((opt, idx) => {
         const div = document.createElement('div');
         div.className = 'review-opt';
+        
+        // ✅ 修正: XSS対策として innerHTML を避け、textContent を使用
         if (opt.isCorrect) {
             div.classList.add('correct');
-            div.innerHTML = `<strong>✔ </strong> ${opt.text}`;
+            const strong = document.createElement('strong');
+            strong.textContent = '✔ ';
+            div.appendChild(strong);
+            div.appendChild(document.createTextNode(opt.text));
         } else if (idx === userSelectedIndex && !opt.isCorrect) {
             div.classList.add('user-wrong');
-            div.innerHTML = `<strong>✖ </strong> ${opt.text}`;
+            const strong = document.createElement('strong');
+            strong.textContent = '✖ ';
+            div.appendChild(strong);
+            div.appendChild(document.createTextNode(opt.text));
         } else {
-            div.innerText = opt.text;
+            div.textContent = opt.text;
         }
         reviewOptsContainer.appendChild(div);
     });
-    document.getElementById('keyPointText').innerText = currentProblem.keyPoint;
+    // ✅ 修正: textContent を使用（XSS対策）
+    document.getElementById('keyPointText').textContent = currentProblem.keyPoint;
 }
 
 function hideResult() {
+    // 結果表示とクイズ画面を両方隠す（他の開始機能が表示する）
     document.getElementById('resultContainer').style.display = 'none';
     document.getElementById('quizContainer').style.display = 'none';
 }
@@ -518,7 +552,7 @@ function saveUserLog(problemId, isCorrect, reactionTime) {
 }
 
 // ==========================================
-// 9. GROUPED PROBLEM LIST & MANAGEMENT
+// 8. GROUPED PROBLEM LIST & MANAGEMENT
 // ==========================================
 function renderGroupedProblemList() {
     const listDiv = document.getElementById('problemList');
@@ -575,9 +609,8 @@ function handleAddForm(e) {
     play8BitSound('click');
     const no = parseInt(document.getElementById('addNo').value);
     const correctIdx = parseInt(document.getElementById('addCorrectIndex').value);
-    const diff = document.getElementById('addDifficulty').value; // コンパウンド値を取得
+    const diff = document.getElementById('addDifficulty').value;
 
-    // 未入力の選択肢を配列から除外するフィルター処理を追加
     const rawOptions = [
         document.getElementById('addOpt0').value,
         document.getElementById('addOpt1').value,
@@ -585,14 +618,25 @@ function handleAddForm(e) {
     ];
     const filteredOptions = rawOptions.filter(opt => opt.trim() !== "");
 
+    // ✅ 修正: 入力値の検証を追加
+    if (filteredOptions.length < 2) {
+        alert("最低2つの選択肢が必要です");
+        return;
+    }
+
+    if (correctIdx < 0 || correctIdx >= filteredOptions.length) {
+        alert(`正解の番号は0～${filteredOptions.length - 1}である必要があります`);
+        return;
+    }
+
     const newProblem = {
         id: no,
         category: document.getElementById('addCategory').value || "未分類",
-        difficulty: diff, // データに難易度を保存
+        difficulty: diff,
         title: document.getElementById('addTitle').value,
         scenario: document.getElementById('addScenario').value,
         tags: document.getElementById('addTags').value.split(',').map(s => s.trim()).filter(s => s),
-        options: filteredOptions, // 空文字が除去されたクリーンな配列
+        options: filteredOptions,
         correctIndex: correctIdx,
         keyPoint: document.getElementById('addKeyPoint').value || ""
     };
@@ -634,11 +678,17 @@ function renderMath() {
 }
 
 // ==========================================
-// 10. STOPWATCH LOGIC
+// 9. STOPWATCH LOGIC
 // ==========================================
 function toggleStopwatch() {
     play8BitSound('click');
     const btn = document.getElementById('btnStopwatch');
+    
+    // ✅ 修正: null チェックを追加
+    if (!btn) {
+        console.warn("[WARNING] btnStopwatch element not found");
+        return;
+    }
     
     if (isSwRunning) {
         // 計測ストップ
