@@ -3,36 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- 1. PWA設定 -->
   <link rel="apple-touch-icon" href="icon.png">
-  <meta name="apple-mobile-web-app-title" content="物理テレメトリ">
+  <meta name="apple-mobile-web-app-title" content="PHYSICS 8BIT">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <title>PHYSICS TELEMETRY</title>
-
-  <!-- 2. 外部ライブラリ (KaTeX & Firebase) -->
+  <title>PHYSICS TELEMETRY 8-BIT</title>
+  
+  <!-- Google Fonts: 8bitレトロフォント -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+  
+  <!-- KaTeX & Firebase -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <!-- 3. 自作CSS -->
+  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- CRT走査線オーバーレイ -->
+<div class="crt-overlay"></div>
 
-
-<!-- 認証ガード画面 (未ログイン時にオーバーレイ表示) -->
+<!-- ログイン画面 -->
 <div id="authContainer" class="auth-overlay">
     <div class="card auth-card">
         <h2>DRIVER AUTHENTICATION</h2>
-        <p style="color:var(--text-sub); margin-bottom:16px; font-size:0.9rem;">コースインにはログインが必要です</p>
-        
+        <p style="color:var(--text-sub); margin-bottom:16px; font-size:0.85rem;">INSERT COIN TO START</p>
+                 
         <form id="authForm">
             <div class="form-group">
                 <label>EMAIL</label>
@@ -40,19 +41,19 @@
             </div>
             <div class="form-group">
                 <label>PASSWORD</label>
-                <input type="password" id="authPassword" required placeholder="••••••••">
+                <input type="password" id="authPassword" required placeholder="******">
             </div>
             <div style="display:flex; gap:10px; margin-top:20px;">
-                <button type="submit" id="btnLogin" class="btn full-width">ログイン</button>
-                <button type="button" id="btnSignUp" class="btn btn-secondary full-width">新規登録</button>
+                <button type="submit" id="btnLogin" class="btn full-width">LOGIN</button>
+                <button type="button" id="btnSignUp" class="btn btn-secondary full-width">SIGN UP</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- メインアプリ領域 (認証成功時のみ表示) -->
+<!-- メインアプリ -->
 <div class="app-layout" id="mainApp" style="display: none;">
-    <!-- PC用 ライブテレメトリ・サイドパネル -->
+    <!-- サイドバー -->
     <aside class="telemetry-sidebar">
         <div class="sidebar-card">
             <div class="sidebar-title">LIVE TELEMETRY</div>
@@ -75,30 +76,30 @@
                 </div>
             </div>
         </div>
-
         <div class="sidebar-card controls-hint">
-            <div class="sidebar-title">PADDLE SHIFT (KEYS)</div>
+            <div class="sidebar-title">PADDLE SHIFT</div>
             <ul>
-                <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> : 回答選択</li>
-                <li><kbd>Space</kbd> / <kbd>Enter</kbd> : 次のラップ</li>
+                <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> : 選択肢</li>
+                <li><kbd>Space</kbd>/<kbd>Enter</kbd> : 次へ</li>
             </ul>
         </div>
     </aside>
 
-    <!-- メインコンテンツ領域 -->
+    <!-- メインコンテンツ -->
     <div class="container">
         <header>
             <h1>PHYSICS <span>TELEMETRY</span></h1>
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button id="btnSoundToggle" class="btn btn-secondary" style="padding:4px 8px; font-size:0.8rem;">🔊 SOUND: ON</button>
                 <span class="badge" id="userEmailBadge">DRIVER</span>
-                <button id="btnLogout" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">LOGOUT</button>
+                <button id="btnLogout" class="btn btn-secondary" style="padding:4px 8px; font-size:0.8rem;">LOGOUT</button>
             </div>
         </header>
 
         <nav class="nav-tabs">
-            <button class="tab-btn active" data-tab="attack-tab">タイムアタック</button>
-            <button class="tab-btn" data-tab="add-tab">問題データ登録</button>
-            <button class="tab-btn" data-tab="list-tab">問題一覧</button>
+            <button class="tab-btn active" data-tab="attack-tab">TIME ATTACK</button>
+            <button class="tab-btn" data-tab="add-tab">ADD DATA</button>
+            <button class="tab-btn" data-tab="list-tab">DATABASE</button>
         </nav>
 
         <!-- TAB 1: TIME ATTACK -->
@@ -106,95 +107,99 @@
             <div class="card search-card">
                 <div class="search-box" style="flex-wrap: wrap;">
                     <select id="selectCategory" class="select-box">
-                        <option value="ALL">ALL SECTORS (全単元)</option>
+                        <option value="ALL">ALL SECTORS</option>
                     </select>
-                    <button class="btn" id="btnSectorStart">単元アタック</button>
-                    <button class="btn btn-secondary" id="btnRandom">完全ランダム</button>
+                    <button class="btn" id="btnSectorStart">START LAP</button>
+                    <button class="btn btn-secondary" id="btnRandom">RANDOM</button>
                     <div style="display: flex; gap: 8px; width: 100%; margin-top: 8px;">
-                        <input type="number" id="searchNo" placeholder="問題No.直接指定 (例: 10)">
-                        <button class="btn btn-secondary" id="btnSearch">呼出</button>
+                        <input type="number" id="searchNo" placeholder="No.検索 (例: 10)">
+                        <button class="btn btn-secondary" id="btnSearch">SEARCH</button>
                     </div>
                 </div>
             </div>
 
+            <!-- クイズ画面 -->
             <div id="quizContainer" class="card" style="display: none;">
                 <div class="timer-container">
                     <div id="timerBar" class="timer-bar"></div>
                 </div>
-
                 <div class="problem-meta">
-                    <span id="pCategory" class="category-tag">分野</span>
+                    <span id="pCategory" class="category-tag">CATEGORY</span>
                     <span id="pNo" class="problem-no">No.--</span>
                 </div>
-
-                <h2 class="problem-title" id="pTitle">問題タイトル</h2>
-                <p class="problem-scenario" id="pScenario">問題シナリオ...</p>
-
+                <h2 class="problem-title" id="pTitle">TITLE</h2>
+                <p class="problem-scenario" id="pScenario">...</p>
                 <div class="conditions-tag" id="pTags"></div>
                 <div class="options-grid" id="optionsContainer"></div>
             </div>
 
+            <!-- リザルト画面 -->
             <div id="resultContainer" class="card result-card" style="display: none;">
                 <div id="resultHeader" class="result-header">PURPLE SECTOR</div>
                 <div id="splitTime" class="split-time">Reaction Time: 0.00s</div>
-
                 <div class="review-box">
                     <div id="reviewTitle" class="review-title"></div>
                     <div id="reviewScenario" class="review-scenario"></div>
                     <div id="reviewOptions" class="review-options"></div>
                 </div>
-
                 <div class="key-point-box">
-                    <div class="key-point-title">⚡ KEY TRIGGER (勝負の着眼点)</div>
-                    <p id="keyPointText">解説テキスト...</p>
+                    <div class="key-point-title">▶ KEY TRIGGER</div>
+                    <p id="keyPointText">...</p>
                 </div>
-
-                <button class="btn full-width" id="btnNext">次の問題へ (NEXT LAP)</button>
+                <button class="btn full-width" id="btnNext">NEXT LAP ▶</button>
             </div>
         </main>
 
         <!-- TAB 2: ADD DATA -->
         <section id="add-tab" class="tab-content">
             <div class="card">
-                <h2>問題データの新規追加（カスタム）</h2>
+                <h2>ADD NEW QUESTION</h2>
                 <form id="addForm">
                     <div class="form-group">
-                        <label>問題集番号 (No.)</label>
-                        <input type="number" id="addNo" required placeholder="例: 3">
+                        <label>PROBLEM NO.</label>
+                        <input type="number" id="addNo" required placeholder="例: 300">
                     </div>
                     <div class="form-group">
-                        <label>分野 (カテゴリー)</label>
-                        <input type="text" id="addCategory" placeholder="例: 力学（物体の運動）" value="力学（物体の運動）">
+                        <label>CATEGORY</label>
+                        <input type="text" id="addCategory" placeholder="例: 力学">
                     </div>
                     <div class="form-group">
-                        <label>タイトル</label>
-                        <input type="text" id="addTitle" required placeholder="例: 斜面上のつり合い">
+                        <label>TITLE</label>
+                        <input type="text" id="addTitle" required placeholder="例: 等加速度運動">
                     </div>
                     <div class="form-group">
-                        <label>問題シナリオ（要約）</label>
-                        <textarea id="addScenario" rows="3" required placeholder="問題設定の要点"></textarea>
+                        <label>SCENARIO (問題文)</label>
+                        <textarea id="addScenario" rows="3" required placeholder="問題文を入力..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label>着眼点タグ（カンマ区切り）</label>
-                        <input type="text" id="addTags" placeholder="例: 斜面成分, 力の分解, 静止摩擦力">
+                        <label>TAGS (カンマ区切り)</label>
+                        <input type="text" id="addTags" placeholder="例: 力学, v-tグラフ">
                     </div>
                     <div class="form-group">
-                        <label>選択肢 1【正解】</label>
-                        <input type="text" id="addOpt0" required placeholder="正解の解法ルート">
+                        <label>OPTION 1 (選択肢1)</label>
+                        <input type="text" id="addOpt0" required placeholder="選択肢1">
                     </div>
                     <div class="form-group">
-                        <label>選択肢 2（ダミー）</label>
-                        <input type="text" id="addOpt1" placeholder="間違い・トラップ解法">
+                        <label>OPTION 2 (選択肢2)</label>
+                        <input type="text" id="addOpt1" placeholder="選択肢2">
                     </div>
                     <div class="form-group">
-                        <label>選択肢 3（ダミー）</label>
-                        <input type="text" id="addOpt2" placeholder="間違い・トラップ解法">
+                        <label>OPTION 3 (選択肢3)</label>
+                        <input type="text" id="addOpt2" placeholder="選択肢3">
                     </div>
                     <div class="form-group">
-                        <label>Key Trigger (勝負の着眼点)</label>
-                        <textarea id="addKeyPoint" rows="2" placeholder="即断の決め手となる理由"></textarea>
+                        <label>CORRECT INDEX (正解の番号)</label>
+                        <select id="addCorrectIndex" class="select-box">
+                            <option value="0">OPTION 1 (選択肢1が正解)</option>
+                            <option value="1">OPTION 2 (選択肢2が正解)</option>
+                            <option value="2">OPTION 3 (選択肢3が正解)</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn full-width">ローカル/クラウドへ保存</button>
+                    <div class="form-group">
+                        <label>KEY TRIGGER (解説・ポイント)</label>
+                        <textarea id="addKeyPoint" rows="2" placeholder="解説のポイントを入力..."></textarea>
+                    </div>
+                    <button type="submit" class="btn full-width">REGISTER DATA</button>
                 </form>
             </div>
         </section>
@@ -202,11 +207,9 @@
         <!-- TAB 3: LIST -->
         <section id="list-tab" class="tab-content">
             <div class="card">
-                <h2>登録済み問題一覧（単元別）</h2>
+                <h2>PROBLEM DATABASE</h2>
                 <div id="problemList" class="grouped-problem-list"></div>
-                <button class="btn btn-secondary full-width" id="btnExport" style="margin-top: 16px;">
-                    全データをJSON出力 (バックアップ)
-                </button>
+                <button class="btn btn-secondary full-width" id="btnExport" style="margin-top: 16px;">EXPORT JSON</button>
             </div>
         </section>
     </div>

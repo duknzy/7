@@ -1,30 +1,33 @@
 :root {
-    --bg-color: #07090e;
-    --card-bg: #11151c;
-    --accent-red: #e10600;
-    --accent-blue: #0090ff;
-    --accent-yellow: #ffb800;
-    --text-main: #f0f6fc;
+    --bg-color: #05070a;
+    --card-bg: #0d1117;
+    --accent-red: #ff0055;
+    --accent-blue: #00e5ff;
+    --accent-yellow: #ffe600;
+    --text-main: #ffffff;
     --text-sub: #8b949e;
-    --border-color: #21262d;
-    --correct-color: #2ea043;
+    --border-color: #ffffff;
+    --correct-color: #00ff66;
+    
+    /* 8bitピクセルシャドウ */
+    --pixel-shadow: 4px 4px 0px #000000;
+    --pixel-shadow-btn: 3px 3px 0px #000000;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'DotGothic16', 'Press Start 2P', monospace, sans-serif;
+    image-rendering: pixelated;
 }
 
 body {
     background-color: var(--bg-color);
-    /* F1テレメトリ風 背景グリッド */
     background-image: 
-        radial-gradient(circle at 50% 0%, rgba(0, 144, 255, 0.08), transparent 70%),
-        linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 100% 100%, 40px 40px, 40px 40px;
+        linear-gradient(to right, rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
     color: var(--text-main);
     display: flex;
     justify-content: center;
@@ -32,11 +35,21 @@ body {
     padding: 24px 16px;
 }
 
-/* ==========================================
-   ワイド画面対応レイアウト OVERHAUL
-   ========================================== */
+/* CRT 走査線エフェクト */
+.crt-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0.2) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 99999;
+}
 
-/* アプリ全体のコンテナ幅を大幅拡張 (最大1400px) */
 .app-layout {
     width: 100%;
     max-width: 1400px;
@@ -55,14 +68,12 @@ body {
 .container {
     flex: 1;
     width: 100%;
-    max-width: 100%; /* 幅制限を解除して全開で使う */
-    margin: 0;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-/* PC表示（850px以上）で左右2カラム化 */
 @media (min-width: 850px) {
     .app-layout {
         flex-direction: row;
@@ -77,16 +88,12 @@ body {
     }
 }
 
-/* ==========================================
-   サイドバー & ステータスUI
-   ========================================== */
-
+/* サイドバー */
 .sidebar-card {
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border: 3px solid var(--border-color);
+    box-shadow: var(--pixel-shadow);
     padding: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
 .sidebar-title {
@@ -95,7 +102,7 @@ body {
     color: var(--accent-blue);
     letter-spacing: 1px;
     margin-bottom: 14px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     padding-bottom: 8px;
 }
 
@@ -118,10 +125,9 @@ body {
 }
 
 .stat-value {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 900;
 }
-
 .stat-value.highlight { color: var(--accent-red); }
 .stat-value.green { color: var(--correct-color); }
 .stat-value.yellow { color: var(--accent-yellow); }
@@ -136,28 +142,29 @@ body {
 }
 
 kbd {
-    background: #21262d;
-    border: 1px solid var(--border-color);
+    background: #000000;
+    border: 2px solid var(--border-color);
     color: var(--accent-yellow);
     padding: 3px 7px;
-    border-radius: 4px;
     font-size: 0.8rem;
     font-weight: bold;
 }
 
-/* ==========================================
-   ヘッダー・カード・フォーム
-   ========================================== */
-
+/* ヘッダー */
 header {
-    border-bottom: 2px solid var(--accent-red);
+    border-bottom: 4px solid var(--accent-red);
     padding-bottom: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-header h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; }
+header h1 {
+    font-family: 'Press Start 2P', 'DotGothic16', monospace;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+}
+
 header h1 span { color: var(--accent-red); }
 
 .badge {
@@ -165,26 +172,28 @@ header h1 span { color: var(--accent-red); }
     color: #fff;
     font-size: 0.75rem;
     font-weight: bold;
-    padding: 3px 10px;
-    border-radius: 4px;
+    padding: 4px 10px;
+    border: 2px solid #fff;
 }
 
+/* メインカード */
 .card {
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 28px; /* パディングを拡大してゆとりを付与 */
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    border: 3px solid var(--border-color);
+    box-shadow: var(--pixel-shadow);
+    padding: 28px;
 }
 
-.search-box { display: flex; gap: 10px; }
+.search-box {
+    display: flex;
+    gap: 10px;
+}
 
 input, textarea, .select-box {
-    background: #0d1117;
-    border: 1px solid var(--border-color);
+    background: #000000;
+    border: 2px solid var(--border-color);
     color: var(--text-main);
     padding: 12px 16px;
-    border-radius: 8px;
     font-size: 1rem;
     width: 100%;
 }
@@ -197,22 +206,22 @@ input:focus, textarea:focus, .select-box:focus {
 .btn {
     background: var(--accent-red);
     color: white;
-    border: none;
+    border: 2px solid #ffffff;
     padding: 12px 22px;
-    border-radius: 8px;
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
+    box-shadow: var(--pixel-shadow-btn);
+    transition: transform 0.05s;
     white-space: nowrap;
 }
 
-.btn:hover { background: #ff1e18; }
-.btn:active { transform: scale(0.96); }
+.btn:hover { background: #ff2277; }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #000; }
 
 .btn-secondary {
     background: #1c2128;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     color: var(--text-main);
 }
 .btn-secondary:hover { background: #2d333b; }
@@ -222,9 +231,9 @@ input:focus, textarea:focus, .select-box:focus {
 /* タイマーバー */
 .timer-container {
     width: 100%;
-    height: 8px;
-    background: #1c2128;
-    border-radius: 4px;
+    height: 12px;
+    background: #000000;
+    border: 2px solid var(--border-color);
     overflow: hidden;
     margin-bottom: 16px;
 }
@@ -235,193 +244,150 @@ input:focus, textarea:focus, .select-box:focus {
     background: var(--accent-blue);
     transition: width 0.05s linear;
 }
-
 .timer-bar.warning { background: var(--accent-yellow); }
 .timer-bar.danger { background: var(--accent-red); }
 
-/* ==========================================
-   クイズ画面 (問題文 & 選択肢の最適化)
-   ========================================== */
-
-.problem-meta { 
-    display: flex; 
-    justify-content: space-between; 
-    font-size: 0.95rem; 
-    margin-bottom: 10px; 
+/* クイズ表示部 */
+.problem-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
 }
 
 .category-tag { color: var(--accent-blue); font-weight: bold; }
 .problem-no { color: var(--accent-yellow); font-weight: bold; }
 
-.problem-title { 
-    font-size: 1.4rem; 
+.problem-title {
+    font-size: 1.3rem;
     font-weight: 800;
-    margin-bottom: 16px; 
+    margin-bottom: 16px;
     line-height: 1.4;
 }
 
-/* 問題文 (Scenario) ボックスのゆとり化 */
 .problem-scenario {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     line-height: 1.8;
-    color: #e6edf3;
-    background: #0d1117;
+    color: #ffffff;
+    background: #000000;
     padding: 20px 24px;
-    border-radius: 10px;
-    border-left: 5px solid var(--accent-blue);
+    border: 2px dashed var(--accent-blue);
+    margin-bottom: 20px;
+    min-height: 80px;
+}
+
+.conditions-tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 20px;
 }
 
-.conditions-tag { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-.tag { 
-    font-size: 0.8rem; 
-    background: #1c2128; 
-    color: var(--text-sub); 
-    padding: 4px 10px; 
-    border-radius: 12px; 
-    border: 1px solid var(--border-color); 
+.tag {
+    font-size: 0.8rem;
+    background: #1c2128;
+    color: var(--text-sub);
+    padding: 4px 10px;
+    border: 1px solid var(--border-color);
 }
 
-/* 選択肢一覧コンテナ */
-.options-grid { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 14px; 
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
-/* 選択肢ボタン (KaTeX完全安全設計) */
 .option-btn {
     background: #161b22;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     color: var(--text-main);
     padding: 18px 22px;
-    border-radius: 10px;
     text-align: left;
     font-size: 1.05rem;
-    line-height: 1.8; /* 数式とテキストが干渉しない余裕ある行間 */
+    line-height: 1.8;
     cursor: pointer;
-    transition: border-color 0.2s, background-color 0.2s;
+    box-shadow: var(--pixel-shadow-btn);
+    transition: border-color 0.1s, background-color 0.1s;
     width: 100%;
     white-space: normal;
     word-break: break-word;
 }
 
-.option-btn:hover { 
-    border-color: var(--accent-blue); 
-    background: #1c2128; 
+.option-btn:hover {
+    border-color: var(--accent-blue);
+    background: #1c2128;
 }
 
-/* ==========================================
-   リザルト・復習画面
-   ========================================== */
-
+/* リザルト画面 */
 .result-card { text-align: center; }
 .result-header { font-size: 2rem; font-weight: 900; margin-bottom: 10px; }
 .result-header.win { color: var(--correct-color); }
 .result-header.lose { color: var(--accent-red); }
-.split-time { font-size: 1.2rem; color: var(--text-sub); margin-bottom: 20px; }
 
-.review-box { 
-    text-align: left; 
-    background: #0d1117; 
-    padding: 18px 22px; 
-    border-radius: 10px; 
-    margin-bottom: 20px; 
-    border: 1px solid var(--border-color); 
+.split-time { font-size: 1.1rem; color: var(--text-sub); margin-bottom: 20px; }
+
+.review-box {
+    text-align: left;
+    background: #000000;
+    padding: 18px 22px;
+    border: 2px solid var(--border-color);
+    margin-bottom: 20px;
 }
 
 .review-title { font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); margin-bottom: 8px; }
 .review-scenario { font-size: 1rem; color: #c9d1d9; margin-bottom: 14px; line-height: 1.6; }
 .review-options { display: flex; flex-direction: column; gap: 10px; }
 
-.review-opt { 
-    padding: 14px 18px; 
-    border-radius: 8px; 
-    font-size: 0.95rem; 
-    border: 1px solid var(--border-color); 
-    background: #161b22; 
-    line-height: 1.6; 
+.review-opt {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+    border: 2px solid var(--border-color);
+    background: #161b22;
+    line-height: 1.6;
 }
 
-.review-opt.correct { background: rgba(46, 160, 67, 0.15); border-color: var(--correct-color); color: #56d364; }
-.review-opt.user-wrong { background: rgba(225, 6, 0, 0.15); border-color: var(--accent-red); color: #ff7b72; }
+.review-opt.correct { background: rgba(0, 255, 102, 0.1); border-color: var(--correct-color); color: var(--correct-color); }
+.review-opt.user-wrong { background: rgba(255, 0, 85, 0.1); border-color: var(--accent-red); color: var(--accent-red); }
 
-.key-point-box { 
-    background: #0d1117; 
-    border: 1px solid var(--accent-yellow); 
-    padding: 16px 20px; 
-    border-radius: 10px; 
-    text-align: left; 
-    font-size: 1rem; 
+.key-point-box {
+    background: #000000;
+    border: 2px solid var(--accent-yellow);
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 1rem;
     line-height: 1.6;
-    margin-bottom: 20px; 
+    margin-bottom: 20px;
 }
 
 .key-point-title { color: var(--accent-yellow); font-weight: bold; margin-bottom: 6px; }
 
-/* ==========================================
-   タブ & 管理画面リスト
-   ========================================== */
-
-.nav-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-.tab-btn { background: none; border: none; color: var(--text-sub); font-weight: bold; padding: 8px 16px; cursor: pointer; border-radius: 6px; font-size: 0.95rem; }
-.tab-btn.active { color: var(--text-main); background: #1c2128; }
+/* ナビゲーションタブ */
+.nav-tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+.tab-btn {
+    background: none; border: none; color: var(--text-sub);
+    font-weight: bold; padding: 8px 16px; cursor: pointer; font-size: 0.95rem;
+}
+.tab-btn.active { color: var(--text-main); background: #1c2128; border: 2px solid #ffffff; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
+/* フォーム & カテゴリグループ */
 .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .form-group label { font-size: 0.9rem; color: var(--text-sub); }
 
-.category-group { margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
-.category-header { background: #1c2128; padding: 12px 18px; font-weight: bold; color: var(--accent-blue); font-size: 1rem; border-bottom: 1px solid var(--border-color); }
-.list-item { padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #0d1117; font-size: 0.95rem; }
+.category-group { margin-bottom: 24px; border: 2px solid var(--border-color); overflow: hidden; }
+.category-header { background: #1c2128; padding: 12px 18px; font-weight: bold; color: var(--accent-blue); font-size: 1rem; border-bottom: 2px solid var(--border-color); }
+.list-item { padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #000000; font-size: 0.95rem; }
 .list-item:last-child { border-bottom: none; }
 
-/* ==========================================
-   KATEX 内部保護用グローバル設定
-   ========================================== */
+/* KaTeX 調整 */
+.katex { font-size: 1.05em !important; line-height: normal !important; text-indent: 0 !important; font-family: KaTeX_Main, sans-serif !important; }
+.katex-display { margin: 0.8em 0 !important; overflow-x: auto !important; overflow-y: hidden !important; }
 
-.katex {
-    font-size: 1.05em !important;
-    line-height: normal !important;
-    text-indent: 0 !important;
-}
-
-.katex-display {
-    margin: 0.8em 0 !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-}
-/* ==========================================
-   AUTH OVERLAY (ログインガード画面)
-   ========================================== */
+/* 認証画面モーダル */
 .auth-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(7, 9, 14, 0.95);
-    backdrop-filter: blur(8px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    padding: 16px;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(5, 7, 10, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 16px;
 }
-
-.auth-card {
-    width: 100%;
-    max-width: 400px;
-    border: 1px solid var(--accent-red);
-    box-shadow: 0 0 30px rgba(225, 6, 0, 0.2);
-    text-align: center;
-}
-
-.auth-card h2 {
-    font-size: 1.3rem;
-    font-weight: 900;
-    color: var(--accent-red);
-    margin-bottom: 6px;
-    letter-spacing: 1px;
-}
+.auth-card { width: 100%; max-width: 400px; border: 3px solid var(--accent-red); box-shadow: var(--pixel-shadow); text-align: center; }
+.auth-card h2 { font-size: 1.3rem; font-weight: 900; color: var(--accent-red); margin-bottom: 6px; letter-spacing: 1px; }
