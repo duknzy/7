@@ -1,21 +1,34 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHYSICS TELEMETRY | VERSTAPPEN SPEC</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- KaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Firebase SDK (v9 Compat版) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <!-- ========================================== -->
+  <!-- ★ ここから追加 ★ -->
+  <!-- ========================================== -->
+  
+  <!-- 1. アプリアイコンの指定 -->
+  <link rel="apple-touch-icon" href="icon.png">
+  
+  <!-- 2. ホーム画面に表示されるアプリ名 -->
+  <meta name="apple-mobile-web-app-title" content="単語ブロック">
+  
+  <!-- 3. Safariの枠（アドレスバー）を消してフルスクリーン化 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <!-- 4. 画面最上部（時刻やバッテリー表示部）の見た目 -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- ========================================== -->
+  <!-- ★ ここまで追加 ★ -->
+  <!-- ========================================== -->
+
+  <title>アプリ</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 
 <!-- 認証ガード画面 (未ログイン時にオーバーレイ表示) -->
 <div id="authContainer" class="auth-overlay">
