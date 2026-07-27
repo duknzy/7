@@ -106,16 +106,45 @@ let swInterval = null;
 let swStartTime = 0;
 let swElapsed = 0;
 let isSwRunning = false;
+
 // ==========================================
 // 4. INITIALIZATION & AUTH
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
     initEvents();
+    initAuth();
 });
 
 function initAuth() {
-    if (!auth) return;
+    // ✅ 修正: if (!auth) return の前にボタンイベントを設定
+    const btnLogin = document.getElementById('btnLogin');
+    const btnSignUp = document.getElementById('btnSignUp');
+    const btnLogout = document.getElementById('btnLogout');
+
+    if (btnLogin) {
+        btnLogin.addEventListener('click', (e) => handleAuth(e, 'login'));
+    }
+    if (btnSignUp) {
+        btnSignUp.addEventListener('click', (e) => handleAuth(e, 'signup'));
+    }
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            if (auth) auth.signOut();
+        });
+    }
+
+    // ✅ Firebase認証が有効な場合のみ onAuthStateChanged を設定
+    if (!auth) {
+        console.warn("[SYSTEM] Firebase not available. Running in offline mode.");
+        // オフラインモード: ダミーユーザーでメインアプリを表示
+        const mainApp = document.getElementById('mainApp');
+        const authContainer = document.getElementById('authContainer');
+        if (authContainer) authContainer.style.display = 'none';
+        if (mainApp) mainApp.style.display = 'flex';
+        loadProblemPackage();
+        return;
+    }
+
     auth.onAuthStateChanged(user => {
         const authContainer = document.getElementById('authContainer');
         const mainApp = document.getElementById('mainApp');
@@ -132,10 +161,6 @@ function initAuth() {
             if (mainApp) mainApp.style.display = 'none';
         }
     });
-
-    document.getElementById('btnLogin').addEventListener('click', (e) => handleAuth(e, 'login'));
-    document.getElementById('btnSignUp').addEventListener('click', (e) => handleAuth(e, 'signup'));
-    document.getElementById('btnLogout').addEventListener('click', () => auth.signOut());
 }
 
 async function handleAuth(e, mode) {
@@ -145,6 +170,10 @@ async function handleAuth(e, mode) {
     const password = document.getElementById('authPassword').value;
     if (!email || !password) {
         alert("EMAILとPASSWORDを入力してください");
+        return;
+    }
+    if (!auth) {
+        alert("Firebase認証が利用できません");
         return;
     }
     try {
@@ -210,217 +239,214 @@ function initEvents() {
         });
     }
 
-    document.getElementById('btnStopwatch').addEventListener('click', toggleStopwatch);
+    const btnStopwatch = document.getElementById('btnStopwatch');
+    if (btnStopwatch) {
+        btnStopwatch.addEventListener('click', toggleStopwatch);
+    }
 
-    document.getElementById('btnSearch').addEventListener('click', () => { play8BitSound('click'); searchAndStart(); });
-    document.getElementById('btnSectorStart').addEventListener('click', () => { play8BitSound('click'); startSectorAttack(); });
-    document.getElementById('btnRandom').addEventListener('click', () => { play8BitSound('click'); startRandom(); });
-    document.getElementById('btnNext').addEventListener('click', () => {
-        play8BitSound('click');
-        const cat = document.getElementById('selectCategory').value;
-        if (cat === 'ALL') startRandom();
-        else startSectorAttack();
-    });
+    const btnSearch = document.getElementById('btnSearch');
+    if (btnSearch) {
+        btnSearch.addEventListener('click', () => { play8BitSound('click'); searchAndStart(); });
+    }
 
-    document.getElementById('addForm').addEventListener('submit', handleAddForm);
-    document.getElementById('btnExport').addEventListener('click', () => { play8BitSound('click'); exportDataJSON(); });
+    const btnSectorStart = document.getElementById('btnSectorStart');
+    if (btnSectorStart) {
+        btnSectorStart.addEventListener('click', () => { play8BitSound('click'); startWithCategory(); });
+    }
 
+    const btnRandom = document.getElementById('btnRandom');
+    if (btnRandom) {
+        btnRandom.addEventListener('click', () => { play8BitSound('click'); startRandom(); });
+    }
+
+    const btnNext = document.getElementById('btnNext');
+    if (btnNext) {
+        btnNext.addEventListener('click', () => { play8BitSound('click'); hideResult(); });
+    }
+
+    const addForm = document.getElementById('addForm');
+    if (addForm) {
+        addForm.addEventListener('submit', handleAddForm);
+    }
+
+    const btnExport = document.getElementById('btnExport');
+    if (btnExport) {
+        btnExport.addEventListener('click', () => { play8BitSound('click'); exportDataJSON(); });
+    }
+
+    // キーボードショートカット
     document.addEventListener('keydown', (e) => {
-        const quizCard = document.getElementById('quizContainer');
-        const resultCard = document.getElementById('resultContainer');
-        if (quizCard.style.display !== 'none') {
-            if (['1', '2', '3'].includes(e.key)) {
-                const idx = parseInt(e.key) - 1;
-                const btns = document.querySelectorAll('#optionsContainer .option-btn');
-                if (btns[idx]) btns[idx].click();
+        if (e.key === '1' || e.key === '2' || e.key === '3') {
+            const idx = parseInt(e.key) - 1;
+            if (currentProblem && idx < currentShuffledOptions.length) {
+                play8BitSound('click');
+                selectOption(idx);
             }
-        } else if (resultCard.style.display !== 'none') {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                document.getElementById('btnNext').click();
+        }
+        if (e.key === ' ' || e.key === 'Enter') {
+            const resultDiv = document.getElementById('resultContainer');
+            if (resultDiv && resultDiv.style.display !== 'none') {
+                play8BitSound('click');
+                hideResult();
             }
         }
     });
 }
 
 // ==========================================
-// 6. CATEGORY FILTER & ATTACK LOGIC
+// 6. PROBLEM SELECTION & QUIZ
 // ==========================================
 function setupCategoryFilter() {
-    const select = document.getElementById('selectCategory');
-    if (!select) return;
-    const categories = [...new Set(problemDB.map(p => p.category))];
-    select.innerHTML = '<option value="ALL">ALL SECTORS</option>';
-    categories.forEach(cat => {
+    const categorySet = new Set();
+    problemDB.forEach(p => categorySet.add(p.category));
+    const categorySelect = document.getElementById('selectCategory');
+    const sorted = Array.from(categorySet).sort();
+    sorted.forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat;
         opt.innerText = cat;
-        select.appendChild(opt);
-    });
-    select.addEventListener('change', (e) => {
-        const sideCat = document.getElementById('sideSector');
-        if (sideCat) sideCat.innerText = e.target.value === 'ALL' ? 'ALL' : 'FILTERED';
+        categorySelect.appendChild(opt);
     });
 }
 
-function startSectorAttack() {
-    const selectedCat = document.getElementById('selectCategory').value;
-    let pool = problemDB;
-    if (selectedCat !== 'ALL') {
-        pool = problemDB.filter(p => p.category === selectedCat);
-    }
-    if (pool.length === 0) {
-        alert("該当する問題がありません");
+function startWithCategory() {
+    const cat = document.getElementById('selectCategory').value;
+    const filtered = problemDB.filter(p => p.category === cat || cat === 'ALL');
+    if (filtered.length === 0) {
+        alert("問題がありません");
         return;
     }
-    const idx = Math.floor(Math.random() * pool.length);
-    startQuiz(pool[idx]);
+    const chosen = filtered[Math.floor(Math.random() * filtered.length)];
+    startQuiz(chosen);
 }
 
 function startRandom() {
-    if (problemDB.length === 0) return;
-    const idx = Math.floor(Math.random() * problemDB.length);
-    startQuiz(problemDB[idx]);
+    if (problemDB.length === 0) {
+        alert("問題がありません");
+        return;
+    }
+    const chosen = problemDB[Math.floor(Math.random() * problemDB.length)];
+    startQuiz(chosen);
 }
 
 function searchAndStart() {
-    const no = parseInt(document.getElementById('searchNo').value);
+    const noStr = document.getElementById('searchNo').value.trim();
+    if (!noStr) {
+        alert("問題番号を入力してください");
+        return;
+    }
+    const no = parseInt(noStr);
     const found = problemDB.find(p => p.id === no);
-    if (found) startQuiz(found);
-    else alert(`No.${no} の問題は見つかりませんでした`);
+    if (!found) {
+        alert(`No.${no} が見つかりません`);
+        return;
+    }
+    startQuiz(found);
 }
 
-// ==========================================
-// 7. QUIZ RUNNER & DYNAMIC TIMER
-// ==========================================
 function startQuiz(problem) {
     currentProblem = problem;
     userSelectedIndex = null;
-    document.getElementById('quizContainer').style.display = 'block';
-    document.getElementById('resultContainer').style.display = 'none';
+    startTime = Date.now();
+    currentLimitSec = 12.0;
+
+    const quizDiv = document.getElementById('quizContainer');
+    const resultDiv = document.getElementById('resultContainer');
+    quizDiv.style.display = 'block';
+    resultDiv.style.display = 'none';
 
     document.getElementById('pNo').innerText = `No.${problem.id}`;
     document.getElementById('pCategory').innerText = problem.category;
+    document.getElementById('pDifficulty').innerText = problem.difficulty ? problem.difficulty.toUpperCase() : "MEDIUM";
     document.getElementById('pTitle').innerText = problem.title;
+    document.getElementById('pScenario').innerText = problem.scenario;
 
-    // コンパウンド（難易度）のUI反映
-    const diffEl = document.getElementById('pDifficulty');
-    if (diffEl) {
-        const diff = problem.difficulty || 'medium';
-        diffEl.innerText = diff.toUpperCase();
-        
-        // タイヤの色を再現 (Soft=赤, Medium=黄, Hard=白)
-        if (diff === 'soft') {
-            diffEl.style.backgroundColor = 'var(--accent-red)';
-            diffEl.style.color = '#fff';
-        } else if (diff === 'medium') {
-            diffEl.style.backgroundColor = 'var(--accent-yellow)';
-            diffEl.style.color = '#000';
-        } else if (diff === 'hard') {
-            diffEl.style.backgroundColor = '#ffffff';
-            diffEl.style.color = '#000';
-        }
+    const tagsDiv = document.getElementById('pTags');
+    tagsDiv.innerHTML = '';
+    if (problem.tags && problem.tags.length > 0) {
+        problem.tags.forEach(tag => {
+            const tagSpan = document.createElement('span');
+            tagSpan.className = 'tag';
+            tagSpan.innerText = tag;
+            tagsDiv.appendChild(tagSpan);
+        });
     }
 
-    // 【重要】数式(KaTeX)を破壊しないよう、タイピング演出を廃止して即時表示
-    const scenarioEl = document.getElementById('pScenario');
-    scenarioEl.innerText = problem.scenario;
-
-    const tagsContainer = document.getElementById('pTags');
-    tagsContainer.innerHTML = '';
-    (problem.tags || []).forEach(t => {
-        const span = document.createElement('span');
-        span.className = 'badge';
-        span.style.background = '#21262d';
-        span.innerText = `#${t}`;
-        tagsContainer.appendChild(span);
-    });
-
-    // Fisher-Yates シャッフル（偏り防止）
-    currentShuffledOptions = problem.options.map((opt, i) => ({
+    currentShuffledOptions = problem.options.map((opt, idx) => ({
         text: opt,
-        originalIndex: i,
-        isCorrect: i === problem.correctIndex
+        isCorrect: idx === problem.correctIndex
     }));
-    
-    for (let i = currentShuffledOptions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [currentShuffledOptions[i], currentShuffledOptions[j]] = [currentShuffledOptions[j], currentShuffledOptions[i]];
-    }
+    currentShuffledOptions.sort(() => Math.random() - 0.5);
 
-    const optsContainer = document.getElementById('optionsContainer');
-    optsContainer.innerHTML = '';
+    const optionsDiv = document.getElementById('optionsContainer');
+    optionsDiv.innerHTML = '';
     currentShuffledOptions.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
-        btn.innerHTML = `<span style="color:var(--accent-yellow); font-weight:bold; margin-right:8px;">[${idx + 1}]</span>${opt.text}`;
-        btn.addEventListener('click', () => selectOption(opt.isCorrect, false, idx));
-        optsContainer.appendChild(btn);
+        btn.type = 'button';
+        btn.innerText = opt.text;
+        btn.addEventListener('click', () => {
+            play8BitSound('click');
+            selectOption(idx);
+        });
+        optionsDiv.appendChild(btn);
     });
 
-    // 文字列のセットが完全に終わった後に1回だけ数式をレンダリングする
+    updateSidebarTelemetry();
     renderMath();
-    
-    currentLimitSec = parseFloat((12.0 + (problem.scenario.length * 0.08)).toFixed(1));
-    startTimer(currentLimitSec);
+
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(updateTimer, 50);
 }
 
-function startTimer(limitSec) {
-    clearInterval(timerId);
+function updateTimer() {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remaining = currentLimitSec - elapsed;
     const timerBar = document.getElementById('timerBar');
-    timerBar.style.width = '100%';
-    timerBar.className = 'timer-bar';
+    const ratio = Math.max(0, remaining / currentLimitSec);
+    timerBar.style.width = (ratio * 100) + '%';
 
-    startTime = Date.now();
-    timerId = setInterval(() => {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const remaining = Math.max(0, limitSec - elapsed);
-        const pct = (remaining / limitSec) * 100;
-        timerBar.style.width = `${pct}%`;
+    if (ratio > 0.3) {
+        timerBar.className = 'timer-bar';
+    } else if (ratio > 0.1) {
+        timerBar.className = 'timer-bar warning';
+    } else {
+        timerBar.className = 'timer-bar danger';
+    }
 
-        if (pct < 50 && pct > 20) {
-            timerBar.className = 'timer-bar warning';
-        } else if (pct <= 20) {
-            timerBar.className = 'timer-bar danger';
-        }
-
-        if (remaining <= 0) {
-            clearInterval(timerId);
-            selectOption(false, true, null);
-        }
-    }, 30);
+    if (remaining <= 0) {
+        clearInterval(timerId);
+        userSelectedIndex = null;
+        showResult();
+    }
 }
 
-// ==========================================
-// 8. RESULT, REVIEW & TELEMETRY UPDATES
-// ==========================================
-function selectOption(isCorrect, isTimeout = false, selectedIdx = null) {
+function selectOption(idx) {
     clearInterval(timerId);
-    clearInterval(typewriterInterval);
-    userSelectedIndex = selectedIdx;
-    
-    const elapsed = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
-    const finalReaction = isTimeout ? currentLimitSec : elapsed;
+    userSelectedIndex = idx;
+    showResult();
+}
+
+function showResult() {
+    const isCorrect = currentShuffledOptions[userSelectedIndex]?.isCorrect || false;
+    const elapsed = (Date.now() - startTime) / 1000;
+    const finalReaction = Math.min(elapsed, currentLimitSec).toFixed(2);
 
     sessionStats.attempts++;
+    sessionStats.totalTime += parseFloat(finalReaction);
     if (isCorrect) sessionStats.corrects++;
-    sessionStats.totalTime += finalReaction;
-    updateSidebarTelemetry();
 
-    document.getElementById('quizContainer').style.display = 'none';
-    document.getElementById('resultContainer').style.display = 'block';
+    const quizDiv = document.getElementById('quizContainer');
+    const resultDiv = document.getElementById('resultContainer');
+    quizDiv.style.display = 'none';
+    resultDiv.style.display = 'block';
 
     const resHeader = document.getElementById('resultHeader');
     const splitText = document.getElementById('splitTime');
 
-    if (isTimeout) {
-        play8BitSound('wrong');
-        resHeader.innerText = "TIME OVER";
-        resHeader.className = "result-header lose";
-        splitText.innerText = `Reaction Time: ${currentLimitSec}s`;
-    } else if (isCorrect) {
+    if (isCorrect) {
         play8BitSound('correct');
-        resHeader.innerText = "PURPLE SECTOR!";
+        resHeader.innerText = "PURPLE SECTOR";
         resHeader.className = "result-header win";
         splitText.innerText = `Reaction Time: ${finalReaction}s`;
     } else {
@@ -441,11 +467,11 @@ function updateSidebarTelemetry() {
     const avgTimeEl = document.getElementById('sideAvgTime');
     if (attemptsEl) attemptsEl.innerText = sessionStats.attempts;
     if (accuracyEl) {
-        const acc = Math.round((sessionStats.corrects / sessionStats.attempts) * 100);
+        const acc = sessionStats.attempts > 0 ? Math.round((sessionStats.corrects / sessionStats.attempts) * 100) : 0;
         accuracyEl.innerText = `${acc}%`;
     }
     if (avgTimeEl) {
-        const avg = (sessionStats.totalTime / sessionStats.attempts).toFixed(1);
+        const avg = sessionStats.attempts > 0 ? (sessionStats.totalTime / sessionStats.attempts).toFixed(1) : 0;
         avgTimeEl.innerText = `${avg}s`;
     }
 }
@@ -471,6 +497,11 @@ function renderReview() {
         reviewOptsContainer.appendChild(div);
     });
     document.getElementById('keyPointText').innerText = currentProblem.keyPoint;
+}
+
+function hideResult() {
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('quizContainer').style.display = 'none';
 }
 
 function saveUserLog(problemId, isCorrect, reactionTime) {
