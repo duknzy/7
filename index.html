@@ -56,6 +56,17 @@
 <div class="app-layout" id="mainApp" style="display: none;">
     <!-- サイドバー -->
     <aside class="telemetry-sidebar">
+
+        <aside class="telemetry-sidebar">
+        <!-- ▼▼ ストップウォッチ機能 追加ここから ▼▼ -->
+        <div class="sidebar-card" style="text-align: center;">
+            <div class="sidebar-title">SESSION TIMER</div>
+            <div style="margin: 10px 0;">
+                <span id="stopwatchDisplay" style="font-size: 2rem; font-weight: 900; color: var(--accent-blue);">00:00:00</span>
+            </div>
+            <button id="btnStopwatch" class="btn full-width">START TIMER</button>
+        </div>
+        
         <div class="sidebar-card">
             <div class="sidebar-title">LIVE TELEMETRY</div>
             <div class="stat-grid">

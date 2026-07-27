@@ -102,6 +102,10 @@ let sessionStats = {
     totalTime: 0
 };
 
+let swInterval = null;
+let swStartTime = 0;
+let swElapsed = 0;
+let isSwRunning = false;
 // ==========================================
 // 4. INITIALIZATION & AUTH
 // ==========================================
