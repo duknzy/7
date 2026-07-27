@@ -198,18 +198,19 @@ async function handleAuth(e, mode) {
 
 async function loadProblemPackage() {
     try {
-        let loadedData = [];
+        // ✅ 修正: 以前は Firestore に1件でもデータがあると problems.json (145問) を
+        // 全く読み込まなくなっていた。これだとログイン時にFirestore側の少数の問題だけに
+        // なってしまい、セクター順・問題数の両方がおかしくなる原因だった。
+        // → problems.json を必ずベースにして、Firestore/localStorageのデータは
+        //   「同じidがあれば上書き、なければ追加」という形で必ずマージする。
+        const response = await fetch('problems.json');
+        const jsonPackage = await response.json();
+        const combined = [...jsonPackage];
+
         if (db) {
             const snapshot = await db.collection("problems").get();
-            snapshot.forEach(doc => loadedData.push(doc.data()));
-        }
-        if (loadedData.length === 0) {
-            const response = await fetch('problems.json');
-            const jsonPackage = await response.json();
-            const customData = JSON.parse(localStorage.getItem('custom_physics_db')) || [];
-            const combined = [...jsonPackage];
-            customData.forEach(c => {
-                // ✅ 修正: id が重複している場合は置き換える
+            snapshot.forEach(doc => {
+                const c = doc.data();
                 const index = combined.findIndex(p => p.id === c.id);
                 if (index >= 0) {
                     combined[index] = c;
@@ -217,9 +218,20 @@ async function loadProblemPackage() {
                     combined.push(c);
                 }
             });
-            loadedData = combined;
         }
-        problemDB = loadedData;
+
+        const customData = JSON.parse(localStorage.getItem('custom_physics_db')) || [];
+        customData.forEach(c => {
+            // ✅ 修正: id が重複している場合は置き換える
+            const index = combined.findIndex(p => p.id === c.id);
+            if (index >= 0) {
+                combined[index] = c;
+            } else {
+                combined.push(c);
+            }
+        });
+
+        problemDB = combined;
         setupCategoryFilter();
         renderGroupedProblemList();
     } catch (error) {
