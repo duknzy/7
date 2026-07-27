@@ -88,6 +88,10 @@ let timerId = null;
 let startTime = 0;
 let currentLimitSec = 12.0;
 
+// ✅ 追加: セクター選択時に「そのセクターの全問題」を保持しておくキュー
+let currentQueue = [];
+let currentQueueIndex = 0;
+
 let sessionStats = {
     attempts: 0,
     corrects: 0,
@@ -271,7 +275,7 @@ function initEvents() {
 
     const btnNext = document.getElementById('btnNext');
     if (btnNext) {
-        btnNext.addEventListener('click', () => { play8BitSound('click'); hideResult(); });
+        btnNext.addEventListener('click', () => { play8BitSound('click'); nextQuestion(); });
     }
 
     const addForm = document.getElementById('addForm');
@@ -297,7 +301,7 @@ function initEvents() {
             const resultDiv = document.getElementById('resultContainer');
             if (resultDiv && resultDiv.style.display !== 'none') {
                 play8BitSound('click');
-                hideResult();
+                nextQuestion();
             }
         }
     });
@@ -316,8 +320,10 @@ function setupCategoryFilter() {
         categorySelect.remove(1);
     }
     
-    const sorted = Array.from(categorySet).sort();
-    sorted.forEach(cat => {
+    // ✅ 修正: problemDB（＝problems.json）に登場する順番をそのまま使う
+    // （Setはvalueを最初に追加された順で保持するので、アルファベット順ソートをやめるだけでOK）
+    const ordered = Array.from(categorySet);
+    ordered.forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat;
         opt.innerText = cat;
@@ -332,8 +338,10 @@ function startWithCategory() {
         alert("問題がありません");
         return;
     }
-    const chosen = filtered[Math.floor(Math.random() * filtered.length)];
-    startQuiz(chosen);
+    // ✅ 修正: そのセクターの全問題をキューに入れ、シャッフルして最初の1問目から出題する
+    currentQueue = fisherYatesShuffle(filtered);
+    currentQueueIndex = 0;
+    startQuiz(currentQueue[currentQueueIndex]);
 }
 
 function startRandom() {
@@ -341,6 +349,9 @@ function startRandom() {
         alert("問題がありません");
         return;
     }
+    // ランダム単発出題なのでセクターキューはクリアする
+    currentQueue = [];
+    currentQueueIndex = 0;
     const chosen = problemDB[Math.floor(Math.random() * problemDB.length)];
     startQuiz(chosen);
 }
@@ -357,6 +368,9 @@ function searchAndStart() {
         alert(`No.${no} が見つかりません`);
         return;
     }
+    // 単発検索なのでセクターキューはクリアする
+    currentQueue = [];
+    currentQueueIndex = 0;
     startQuiz(found);
 }
 
@@ -536,6 +550,23 @@ function hideResult() {
     // 結果表示とクイズ画面を両方隠す（他の開始機能が表示する）
     document.getElementById('resultContainer').style.display = 'none';
     document.getElementById('quizContainer').style.display = 'none';
+}
+
+// ✅ 追加: 「NEXT LAP」時にセクターキューが残っていれば次の問題へ進む
+function nextQuestion() {
+    hideResult();
+
+    if (currentQueue.length > 0 && currentQueueIndex < currentQueue.length - 1) {
+        // まだそのセクターに未出題の問題が残っている → 続けて出題
+        currentQueueIndex++;
+        startQuiz(currentQueue[currentQueueIndex]);
+    } else if (currentQueue.length > 0) {
+        // セクター内の全問題が終了
+        currentQueue = [];
+        currentQueueIndex = 0;
+        alert("SECTOR COMPLETE! このセクターの全問題が終了しました。");
+    }
+    // currentQueue が空（RANDOM/検索からの単発出題）の場合は何もせず検索画面に戻る
 }
 
 function saveUserLog(problemId, isCorrect, reactionTime) {
