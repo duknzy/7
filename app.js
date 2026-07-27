@@ -198,6 +198,7 @@ function initEvents() {
             e.target.classList.add('active');
         });
     });
+    
 
     // サウンド切り替えボタン
     const soundBtn = document.getElementById('btnSoundToggle');
@@ -208,6 +209,8 @@ function initEvents() {
             if (soundEnabled) play8BitSound('click');
         });
     }
+
+    document.getElementById('btnStopwatch').addEventListener('click', toggleStopwatch);
 
     document.getElementById('btnSearch').addEventListener('click', () => { play8BitSound('click'); searchAndStart(); });
     document.getElementById('btnSectorStart').addEventListener('click', () => { play8BitSound('click'); startSectorAttack(); });
@@ -597,4 +600,41 @@ function renderMath() {
             throwOnError: false
         });
     }
+}
+
+// ==========================================
+// 10. STOPWATCH LOGIC
+// ==========================================
+function toggleStopwatch() {
+    play8BitSound('click');
+    const btn = document.getElementById('btnStopwatch');
+    
+    if (isSwRunning) {
+        // 計測ストップ
+        clearInterval(swInterval);
+        isSwRunning = false;
+        btn.innerText = "START TIMER";
+        btn.classList.remove('btn-secondary');
+        btn.style.backgroundColor = "var(--accent-red)";
+    } else {
+        // 計測スタート
+        swStartTime = Date.now() - swElapsed;
+        swInterval = setInterval(updateStopwatch, 1000);
+        isSwRunning = true;
+        btn.innerText = "STOP TIMER";
+        btn.classList.add('btn-secondary');
+        btn.style.backgroundColor = "#1c2128";
+    }
+}
+
+function updateStopwatch() {
+    swElapsed = Date.now() - swStartTime;
+    const totalSec = Math.floor(swElapsed / 1000);
+    
+    // 時・分・秒をそれぞれ計算し、2桁のゼロ埋め（00:00:00）にする
+    const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+    const s = String(totalSec % 60).padStart(2, '0');
+    
+    document.getElementById('stopwatchDisplay').innerText = `${h}:${m}:${s}`;
 }
