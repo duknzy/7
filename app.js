@@ -242,7 +242,40 @@ async function loadProblemPackage() {
 // ==========================================
 // 6. EVENT BINDING & SHORTCUTS
 // ==========================================
+function initCRT() {
+    const crtOverlay = document.querySelector('.crt-overlay');
+    const crtBtn = document.getElementById('btnCrtToggle');
+    if (!crtOverlay || !crtBtn) return;
+
+    const savedState = localStorage.getItem('crt_enabled');
+    const isEnabled = savedState !== 'false';
+
+    if (!isEnabled) {
+        crtOverlay.classList.add('crt-off');
+        crtBtn.innerText = "📺 CRT: OFF";
+    } else {
+        crtOverlay.classList.remove('crt-off');
+        crtBtn.innerText = "📺 CRT: ON";
+    }
+
+    crtBtn.addEventListener('click', () => {
+        const currentlyOff = crtOverlay.classList.contains('crt-off');
+        if (currentlyOff) {
+            crtOverlay.classList.remove('crt-off');
+            crtBtn.innerText = "📺 CRT: ON";
+            localStorage.setItem('crt_enabled', 'true');
+        } else {
+            crtOverlay.classList.add('crt-off');
+            crtBtn.innerText = "📺 CRT: OFF";
+            localStorage.setItem('crt_enabled', 'false');
+        }
+        if (soundEnabled) play8BitSound('click');
+    });
+}
+
 function initEvents() {
+    initCRT();
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             play8BitSound('click');
@@ -253,7 +286,6 @@ function initEvents() {
             e.target.classList.add('active');
         });
     });
-    
 
     // サウンド切り替えボタン
     const soundBtn = document.getElementById('btnSoundToggle');
@@ -268,6 +300,11 @@ function initEvents() {
     const btnStopwatch = document.getElementById('btnStopwatch');
     if (btnStopwatch) {
         btnStopwatch.addEventListener('click', toggleStopwatch);
+    }
+
+    const btnMobStopwatch = document.getElementById('btnMobStopwatch');
+    if (btnMobStopwatch) {
+        btnMobStopwatch.addEventListener('click', toggleStopwatch);
     }
 
     const btnSearch = document.getElementById('btnSearch');
@@ -298,6 +335,7 @@ function initEvents() {
     const btnExport = document.getElementById('btnExport');
     if (btnExport) {
         btnExport.addEventListener('click', () => { play8BitSound('click'); exportDataJSON(); });
+    }
     }
 
     // キーボードショートカット
@@ -433,7 +471,17 @@ function startQuiz(problem) {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.type = 'button';
-        btn.innerText = opt.text;
+
+        const numSpan = document.createElement('span');
+        numSpan.className = 'opt-num';
+        numSpan.innerText = `${idx + 1}`;
+
+        const textSpan = document.createElement('span');
+        textSpan.innerText = opt.text;
+
+        btn.appendChild(numSpan);
+        btn.appendChild(textSpan);
+
         btn.addEventListener('click', () => {
             play8BitSound('click');
             selectOption(idx);
@@ -509,21 +557,30 @@ function showResult() {
     renderReview();
     renderMath();
     saveUserLog(currentProblem.id, isCorrect, finalReaction);
+    updateSidebarTelemetry();
 }
 
 function updateSidebarTelemetry() {
     const attemptsEl = document.getElementById('sideAttempts');
     const accuracyEl = document.getElementById('sideAccuracy');
     const avgTimeEl = document.getElementById('sideAvgTime');
+    const sideSectorEl = document.getElementById('sideSector');
+
+    const mobAttemptsEl = document.getElementById('mobAttempts');
+    const mobAccuracyEl = document.getElementById('mobAccuracy');
+    const mobAvgTimeEl = document.getElementById('mobAvgTime');
+
+    const acc = sessionStats.attempts > 0 ? Math.round((sessionStats.corrects / sessionStats.attempts) * 100) : 0;
+    const avg = sessionStats.attempts > 0 ? (sessionStats.totalTime / sessionStats.attempts).toFixed(1) : 0;
+
     if (attemptsEl) attemptsEl.innerText = sessionStats.attempts;
-    if (accuracyEl) {
-        const acc = sessionStats.attempts > 0 ? Math.round((sessionStats.corrects / sessionStats.attempts) * 100) : 0;
-        accuracyEl.innerText = `${acc}%`;
-    }
-    if (avgTimeEl) {
-        const avg = sessionStats.attempts > 0 ? (sessionStats.totalTime / sessionStats.attempts).toFixed(1) : 0;
-        avgTimeEl.innerText = `${avg}s`;
-    }
+    if (accuracyEl) accuracyEl.innerText = `${acc}%`;
+    if (avgTimeEl) avgTimeEl.innerText = `${avg}s`;
+    if (sideSectorEl && currentProblem) sideSectorEl.innerText = currentProblem.category || "ALL";
+
+    if (mobAttemptsEl) mobAttemptsEl.innerText = sessionStats.attempts;
+    if (mobAccuracyEl) mobAccuracyEl.innerText = `${acc}%`;
+    if (mobAvgTimeEl) mobAvgTimeEl.innerText = `${avg}s`;
 }
 
 function renderReview() {
@@ -726,28 +783,35 @@ function renderMath() {
 function toggleStopwatch() {
     play8BitSound('click');
     const btn = document.getElementById('btnStopwatch');
-    
-    // ✅ 修正: null チェックを追加
-    if (!btn) {
-        console.warn("[WARNING] btnStopwatch element not found");
-        return;
-    }
+    const mobBtn = document.getElementById('btnMobStopwatch');
     
     if (isSwRunning) {
         // 計測ストップ
         clearInterval(swInterval);
         isSwRunning = false;
-        btn.innerText = "START TIMER";
-        btn.classList.remove('btn-secondary');
-        btn.style.backgroundColor = "var(--accent-red)";
+        if (btn) {
+            btn.innerText = "START TIMER";
+            btn.classList.remove('btn-secondary');
+            btn.style.backgroundColor = "var(--accent-red)";
+        }
+        if (mobBtn) {
+            mobBtn.innerText = "TIMER START";
+            mobBtn.classList.add('btn-secondary');
+        }
     } else {
         // 計測スタート
         swStartTime = Date.now() - swElapsed;
         swInterval = setInterval(updateStopwatch, 1000);
         isSwRunning = true;
-        btn.innerText = "STOP TIMER";
-        btn.classList.add('btn-secondary');
-        btn.style.backgroundColor = "#1c2128";
+        if (btn) {
+            btn.innerText = "STOP TIMER";
+            btn.classList.add('btn-secondary');
+            btn.style.backgroundColor = "#1c2128";
+        }
+        if (mobBtn) {
+            mobBtn.innerText = "TIMER STOP";
+            mobBtn.classList.remove('btn-secondary');
+        }
     }
 }
 
@@ -760,5 +824,10 @@ function updateStopwatch() {
     const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
     const s = String(totalSec % 60).padStart(2, '0');
     
-    document.getElementById('stopwatchDisplay').innerText = `${h}:${m}:${s}`;
+    const timeStr = `${h}:${m}:${s}`;
+    const desktopEl = document.getElementById('stopwatchDisplay');
+    const mobileEl = document.getElementById('mobStopwatchDisplay');
+
+    if (desktopEl) desktopEl.innerText = timeStr;
+    if (mobileEl) mobileEl.innerText = timeStr;
 }

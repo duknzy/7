@@ -10,10 +10,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>PHYSICS TELEMETRY 8-BIT</title>
   
-  <!-- Google Fonts: 8bitレトロフォント (ゴシック体ベース) -->
+  <!-- Google Fonts: 8bitレトロフォント & 高可読性 Noto Sans JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
   
   <!-- KaTeX & Firebase -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -99,12 +99,34 @@
     <div class="container">
         <header>
             <h1>PHYSICS <span>TELEMETRY</span></h1>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <button id="btnSoundToggle" class="btn btn-secondary" style="padding:4px 8px; font-size:0.8rem;">🔊 SOUND: ON</button>
+            <div class="header-controls">
+                <button id="btnCrtToggle" class="btn btn-secondary header-btn" title="CRT走査線ON/OFF">📺 CRT: ON</button>
+                <button id="btnSoundToggle" class="btn btn-secondary header-btn">🔊 SOUND: ON</button>
                 <span class="badge" id="userEmailBadge">DRIVER</span>
-                <button id="btnLogout" class="btn btn-secondary" style="padding:4px 8px; font-size:0.8rem;">LOGOUT</button>
+                <button id="btnLogout" class="btn btn-secondary header-btn">LOGOUT</button>
             </div>
         </header>
+
+        <!-- モバイル用ステータスバー（画面幅850px未満で表示） -->
+        <div class="mobile-telemetry-bar">
+            <div class="mob-stat">
+                <span class="mob-label">TIMER</span>
+                <span id="mobStopwatchDisplay" class="mob-value highlight-blue">00:00:00</span>
+            </div>
+            <div class="mob-stat">
+                <span class="mob-label">ACCURACY</span>
+                <span id="mobAccuracy" class="mob-value green">--%</span>
+            </div>
+            <div class="mob-stat">
+                <span class="mob-label">ATTEMPTS</span>
+                <span id="mobAttempts" class="mob-value">0</span>
+            </div>
+            <div class="mob-stat">
+                <span class="mob-label">AVG TIME</span>
+                <span id="mobAvgTime" class="mob-value yellow">--.s</span>
+            </div>
+            <button id="btnMobStopwatch" class="btn btn-secondary btn-sm mob-timer-btn">TIMER START</button>
+        </div>
 
         <nav class="nav-tabs">
             <button class="tab-btn active" data-tab="attack-tab">TIME ATTACK</button>
