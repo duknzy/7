@@ -336,7 +336,6 @@ function initEvents() {
     if (btnExport) {
         btnExport.addEventListener('click', () => { play8BitSound('click'); exportDataJSON(); });
     }
-    }
 
     // キーボードショートカット
     document.addEventListener('keydown', (e) => {
